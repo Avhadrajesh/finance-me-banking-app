@@ -41,3 +41,4 @@ build/
 *.tfvars
 .terraform/
 awsdetails.txt
+.git 
