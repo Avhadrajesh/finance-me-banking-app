@@ -40,3 +40,4 @@ build/
 *.tfstate.*
 *.tfvars
 .terraform/
+awsdetails.txt
