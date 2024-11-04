@@ -1,4 +1,6 @@
-HELP.md
+# HELP.md
+
+## Target Directories
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -31,3 +33,10 @@ build/
 
 ### VS Code ###
 .vscode/
+.obsidian/
+
+### Terraform ###
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
