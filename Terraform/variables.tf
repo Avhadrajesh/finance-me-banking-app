@@ -10,3 +10,22 @@ variable "keypair_name" {
   default     = "terraform-keypair"  # Replace with your key pair name
 }
 
+# variables.tf
+variable "AWS_ACCESS_KEY" {
+  description = "AWS Access Key"
+  type        = string
+  sensitive   = true  # Mark this variable as sensitive so Terraform doesn't display it in logs
+}
+
+variable "AWS_SECRET_KEY" {
+  description = "AWS Secret Access Key"
+  type        = string
+  sensitive   = true  # Mark this variable as sensitive
+}
+
+variable "AWS_REGION" {
+  description = "AWS Region"
+  type        = string
+  default     = "us-east-1"  # Example region, adjust as needed
+}
+

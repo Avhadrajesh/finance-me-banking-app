@@ -1,8 +1,9 @@
 # Configure the AWS provider
 provider "aws" {
-  region = "us-east-1"  # Using N. Virginia for now
+  region     = var.AWS_REGION
+  access_key = var.AWS_ACCESS_KEY
+  secret_key = var.AWS_SECRET_KEY
 }
-
 
 # Create a new VPC
 resource "aws_vpc" "Terra_vpc" {
@@ -15,10 +16,10 @@ resource "aws_vpc" "Terra_vpc" {
 
 # Create the first Public Subnet
 resource "aws_subnet" "Terra_public_subnet_01" {
-  vpc_id            = aws_vpc.Terra_vpc.id
-  cidr_block        = "10.0.1.0/24"  # Adjust CIDR block as needed
-  availability_zone = "us-east-1a"   # Specify the availability zone
-  map_public_ip_on_launch = "true"
+  vpc_id                  = aws_vpc.Terra_vpc.id
+  cidr_block              = "10.0.1.0/24"  # Adjust CIDR block as needed
+  availability_zone       = "us-east-1a"   # Specify the availability zone
+  map_public_ip_on_launch = true
 
   tags = {
     Name = "New-subnet-1"
@@ -27,10 +28,10 @@ resource "aws_subnet" "Terra_public_subnet_01" {
 
 # Create the second Public Subnet
 resource "aws_subnet" "Terra_public_subnet_02" {
-  vpc_id            = aws_vpc.Terra_vpc.id
-  cidr_block        = "10.0.2.0/24"  # Adjust CIDR block as needed
-  availability_zone = "us-east-1b"   # Specify another availability zone
-  map_public_ip_on_launch = "true"
+  vpc_id                  = aws_vpc.Terra_vpc.id
+  cidr_block              = "10.0.2.0/24"  # Adjust CIDR block as needed
+  availability_zone       = "us-east-1b"   # Specify another availability zone
+  map_public_ip_on_launch = true
 
   tags = {
     Name = "New-subnet-2"
@@ -48,7 +49,7 @@ resource "aws_internet_gateway" "Terra_igw" {
 
 # Create a Route Table
 resource "aws_route_table" "Terra_rt" {
-  vpc_id = aws_vpc.Terra_vpc.id 
+  vpc_id = aws_vpc.Terra_vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -84,22 +85,22 @@ resource "aws_security_group" "Terra_sg" {
 }
 
 resource "aws_security_group_rule" "Terra_sg_ssh_ingress" {
-  description = "ssh access"
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]  # Allow SSH from anywhere (consider limiting this)
+  description = "SSH access"
+  type        = "ingress"
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]  # Allow SSH from anywhere (consider limiting this)
   security_group_id = aws_security_group.Terra_sg.id
 }
 
 resource "aws_security_group_rule" "Terra_sg_jenkins_ingress" {
-  description = "jenkins port"
-  type              = "ingress"
-  from_port         = 8080
-  to_port           = 8080
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]  # Allow SSH from anywhere (consider limiting this)
+  description = "Jenkins port"
+  type        = "ingress"
+  from_port   = 8080
+  to_port     = 8080
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]  # Allow access from anywhere (consider limiting this)
   security_group_id = aws_security_group.Terra_sg.id
 }
 
@@ -114,15 +115,16 @@ resource "aws_security_group_rule" "allow_all_traffic_egress" {
 
 # Create EC2 Instances
 resource "aws_instance" "demoserver" {
-  ami                    =var.ubuntu_ami             # Use Ubuntu AMI variable
-  instance_type         = "t2.micro"
-  key_name              = var.keypair_name            # Use variable for key pair name
-  subnet_id             = aws_subnet.new_public_subnet_01.id  # Specify the subnet for the instance
-  vpc_security_group_ids = [aws_security_group.demo_sg.id]  # Reference the security group by ID
-  for_each = toset(["jenkins-master", "jenkins-slave", "ansible"]) # Create 3 instances as per our requirement
+  ami                    = var.ubuntu_ami             # Use Ubuntu AMI variable
+  instance_type          = "t2.micro"
+  key_name               = var.keypair_name          # Use variable for key pair name
+  subnet_id              = aws_subnet.Terra_public_subnet_01.id  # Specify the subnet for the instance
+  vpc_security_group_ids = [aws_security_group.Terra_sg.id]  # Reference the security group by ID
+  for_each               = toset(["jenkins-master", "jenkins-slave", "ansible"]) # Create 3 instances
 
   tags = {
-    Name        = "${each.key}"
-    Environment = "Development"                # Additional example tag
+    Name        = each.key
+    Environment = "Development"  # Example tag
   }
 }
+
