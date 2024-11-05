@@ -1,0 +1,128 @@
+# Configure the AWS provider
+provider "aws" {
+  region = "us-east-1"  # Using N. Virginia for now
+}
+
+
+# Create a new VPC
+resource "aws_vpc" "Terra_vpc" {
+  cidr_block = "10.0.0.0/16"  # Adjust CIDR block as needed
+
+  tags = {
+    Name = "Terra-vpc"
+  }
+}
+
+# Create the first Public Subnet
+resource "aws_subnet" "Terra_public_subnet_01" {
+  vpc_id            = aws_vpc.Terra_vpc.id
+  cidr_block        = "10.0.1.0/24"  # Adjust CIDR block as needed
+  availability_zone = "us-east-1a"   # Specify the availability zone
+  map_public_ip_on_launch = "true"
+
+  tags = {
+    Name = "New-subnet-1"
+  }
+}
+
+# Create the second Public Subnet
+resource "aws_subnet" "Terra_public_subnet_02" {
+  vpc_id            = aws_vpc.Terra_vpc.id
+  cidr_block        = "10.0.2.0/24"  # Adjust CIDR block as needed
+  availability_zone = "us-east-1b"   # Specify another availability zone
+  map_public_ip_on_launch = "true"
+
+  tags = {
+    Name = "New-subnet-2"
+  }
+}
+
+# Create an Internet Gateway
+resource "aws_internet_gateway" "Terra_igw" {
+  vpc_id = aws_vpc.Terra_vpc.id
+
+  tags = {
+    Name = "New-igw"
+  }
+}
+
+# Create a Route Table
+resource "aws_route_table" "Terra_rt" {
+  vpc_id = aws_vpc.Terra_vpc.id 
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.Terra_igw.id
+  }
+
+  tags = {
+    Name = "Terra-route-table"
+  }
+}
+
+# Create Route Table Association for the first subnet
+resource "aws_route_table_association" "rta_1" {
+  subnet_id      = aws_subnet.Terra_public_subnet_01.id
+  route_table_id = aws_route_table.Terra_rt.id
+}
+
+# Create Route Table Association for the second subnet
+resource "aws_route_table_association" "rta_2" {
+  subnet_id      = aws_subnet.Terra_public_subnet_02.id
+  route_table_id = aws_route_table.Terra_rt.id
+}
+
+# Create a Security Group
+resource "aws_security_group" "Terra_sg" {
+  name        = "Terra-sg"
+  description = "Allow SSH inbound traffic and all outbound traffic"
+  vpc_id      = aws_vpc.Terra_vpc.id  # Associate with the new VPC
+
+  tags = {
+    Name = "Terra-sg"
+  }
+}
+
+resource "aws_security_group_rule" "Terra_sg_ssh_ingress" {
+  description = "ssh access"
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]  # Allow SSH from anywhere (consider limiting this)
+  security_group_id = aws_security_group.Terra_sg.id
+}
+
+resource "aws_security_group_rule" "Terra_sg_jenkins_ingress" {
+  description = "jenkins port"
+  type              = "ingress"
+  from_port         = 8080
+  to_port           = 8080
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]  # Allow SSH from anywhere (consider limiting this)
+  security_group_id = aws_security_group.Terra_sg.id
+}
+
+resource "aws_security_group_rule" "allow_all_traffic_egress" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"  # Allow all outbound traffic
+  cidr_blocks       = ["0.0.0.0/0"]  # Allow all outbound traffic
+  security_group_id = aws_security_group.Terra_sg.id
+}
+
+# Create EC2 Instances
+resource "aws_instance" "demoserver" {
+  ami                    =var.ubuntu_ami             # Use Ubuntu AMI variable
+  instance_type         = "t2.micro"
+  key_name              = var.keypair_name            # Use variable for key pair name
+  subnet_id             = aws_subnet.new_public_subnet_01.id  # Specify the subnet for the instance
+  vpc_security_group_ids = [aws_security_group.demo_sg.id]  # Reference the security group by ID
+  for_each = toset(["jenkins-master", "jenkins-slave", "ansible"]) # Create 3 instances as per our requirement
+
+  tags = {
+    Name        = "${each.key}"
+    Environment = "Development"                # Additional example tag
+  }
+}
