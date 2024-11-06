@@ -1,29 +1,18 @@
 pipeline {
     agent {
         node {
-            label 'maven'  // Runs on a node with the 'maven' label
+            label 'maven'
         }
+    }
+    
+    environment {
+        PATH = "/opt/apache-maven-3.9.9/bin:$PATH"
     }
 
     stages {
-        // Stage 1: Print "Hello World"
-        stage('Hello') {
+        stage('Build') {
             steps {
-                echo 'Hello World'
-            }
-        }
-
-        // Stage 2: Print "Goodbye World"
-        stage('Goodbye') {
-            steps {
-                echo 'Goodbye World'
-            }
-        }
-
-        // Stage 3: Print completion message
-        stage('Completion') {
-            steps {
-                echo 'Pipeline execution is complete.'
+                sh 'mvn clean deploy' // Corrected 'depploy' to 'deploy'
             }
         }
     }
