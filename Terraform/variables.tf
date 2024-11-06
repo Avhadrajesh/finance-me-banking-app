@@ -28,4 +28,3 @@ variable "AWS_REGION" {
   type        = string
   default     = "us-east-1"  # Example region, adjust as needed
 }
-

@@ -22,7 +22,7 @@ resource "aws_subnet" "Terra_public_subnet_01" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "New-subnet-1"
+    Name = "terra-subnet-1"
   }
 }
 
@@ -34,7 +34,7 @@ resource "aws_subnet" "Terra_public_subnet_02" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "New-subnet-2"
+    Name = "terra-subnet-2"
   }
 }
 
@@ -43,7 +43,7 @@ resource "aws_internet_gateway" "Terra_igw" {
   vpc_id = aws_vpc.Terra_vpc.id
 
   tags = {
-    Name = "New-igw"
+    Name = "terra-igw"
   }
 }
 
@@ -62,13 +62,13 @@ resource "aws_route_table" "Terra_rt" {
 }
 
 # Create Route Table Association for the first subnet
-resource "aws_route_table_association" "rta_1" {
+resource "aws_route_table_association" "terra_rta_1" {
   subnet_id      = aws_subnet.Terra_public_subnet_01.id
   route_table_id = aws_route_table.Terra_rt.id
 }
 
 # Create Route Table Association for the second subnet
-resource "aws_route_table_association" "rta_2" {
+resource "aws_route_table_association" "terra_rta_2" {
   subnet_id      = aws_subnet.Terra_public_subnet_02.id
   route_table_id = aws_route_table.Terra_rt.id
 }
@@ -114,17 +114,25 @@ resource "aws_security_group_rule" "allow_all_traffic_egress" {
 }
 
 # Create EC2 Instances
-resource "aws_instance" "demoserver" {
+resource "aws_instance" "terraserver" {
   ami                    = var.ubuntu_ami             # Use Ubuntu AMI variable
   instance_type          = "t2.micro"
   key_name               = var.keypair_name          # Use variable for key pair name
   subnet_id              = aws_subnet.Terra_public_subnet_01.id  # Specify the subnet for the instance
   vpc_security_group_ids = [aws_security_group.Terra_sg.id]  # Reference the security group by ID
-  for_each               = toset(["jenkins-master", "jenkins-slave", "ansible"]) # Create 3 instances
+
+  for_each               = toset(["jenkins-master","production","build-slave", "ansible"]) # Create 3 instances
 
   tags = {
-    Name        = each.key
-    Environment = "Development"  # Example tag
+    Name        = each.key                  # Use each.key to set unique names for each instance
+    Environment = "Development"             # Example tag to specify the environment
   }
+
+  # Uncomment and set the user_data if needed
+  # user_data = data.cloudinit_config.cloudinit-first-demo.rendered
 }
 
+# Output EC2 Instance Public IPs
+output "ec2_terra_ips" {
+  value = { for k, v in aws_instance.terraserver : k => v.public_ip }
+}
