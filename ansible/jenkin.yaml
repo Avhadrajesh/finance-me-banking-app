@@ -1,0 +1,35 @@
+---
+- hosts: jenkins-master
+  become: true
+  tasks:
+    - name: Add the Jenkins GPG key
+      apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        state: present
+
+    - name: Add Jenkins repository
+      apt_repository: 
+        repo: 'deb https://pkg.jenkins.io/debian-stable binary/'
+        state: present 
+
+    - name: Install Java OpenJDK 17
+      apt: 
+        name: openjdk-17-jre
+        state: present
+        update_cache: yes  # Ensure the cache is updated before installation
+
+    - name: Install Jenkins
+      apt: 
+        name: jenkins 
+        state: present
+        update_cache: yes  # Ensure the cache is updated before installation
+
+    - name: Start Jenkins service
+      service: 
+        name: jenkins 
+        state: started 
+
+    - name: Enable Jenkins to start at boot time
+      service: 
+        name: jenkins 
+        enabled: yes 

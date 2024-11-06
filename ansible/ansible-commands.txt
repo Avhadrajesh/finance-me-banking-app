@@ -1,0 +1,5 @@
+# dry run ansible playbook
+ansible-playbook -i /opt/hosts jenkins-master-setup.yaml --check
+
+# run ansible playbook
+ansible-playbook -i /opt/hosts jenkins-master-setup.yaml 
