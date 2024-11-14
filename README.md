@@ -18,7 +18,7 @@ FinanceMe is a leading banking and financial services provider based in Germany.
 
 - **Monitoring**: Integrated with Prometheus and Grafana for real-time monitoring and visualization of metrics.
 
-## Continuous Integration & Deployment
+## Continuous Integration & Deployment.
 
 This project incorporates a fully automated CI/CD pipeline using:
 - **Git**: Version control for tracking code changes.
